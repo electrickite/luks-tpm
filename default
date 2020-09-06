@@ -1,0 +1,25 @@
+# Configuration file for luks-tpm
+#
+# Commented variables show default values.
+
+# Common settings
+#
+# TMPFS_MOUNT     Mount point for the tmpfs file system
+# SEALED_KEYFILE  Absolute path to public portion of the sealed key
+# NVRAM_INDEX     Index of NVRAM area to store key
+# KEY_SIZE        Size in bytes of the generated key
+# TPM_KEY_SLOT    LUKS slot number for the TPM-managed key
+# RESET_KEY_SLOT  LUKS slot number for temporary reset passphrase
+# PCRS            TPM-Tools PCR bank selection list used to seal key
+# WELL_KNOWN      Use TSS well-known secret as owner password
+# ROOT_DEVICE     The LUKS block device path
+# ACTION          The default command action
+
+#TMPFS_MOUNT="/root/keyfs"
+#SEALED_KEYFILE="/boot/keyfile.enc"
+#NVRAM_INDEX=""
+#KEY_SIZE=32
+#TPM_KEY_SLOT=1
+#RESET_KEY_SLOT=2
+#PCRS="-p 0 -p 1 -p 2 -p 3 -p 4 -p 5 -p 6 -p 7"
+#WELL_KNOWN=""
