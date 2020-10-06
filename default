@@ -5,8 +5,8 @@
 # Common settings
 #
 # TMPFS_MOUNT     Mount point for the tmpfs file system
-# SEALED_KEYFILE  Absolute path to public portion of the sealed key
-# NVRAM_INDEX     Index of NVRAM area to store key
+# SEALED_KEYFILE  Absolute path to the sealed key file
+# NVRAM_INDEX     Index of NVRAM area to store LUKS key
 # KEY_SIZE        Size in bytes of the generated key
 # TPM_KEY_SLOT    LUKS slot number for the TPM-managed key
 # RESET_KEY_SLOT  LUKS slot number for temporary reset passphrase

@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 
 # luks-tpm -- Manage TPM 1.2 sealed LUKS keys
 # Copyright (C) 2017-2020 Corey Hinshaw <corey@electrickite.org>
@@ -17,7 +17,7 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 version() {
-  echo "luks-tpm 0.3.0"
+  echo "luks-tpm 1.0.0"
 }
 
 usage() {
@@ -35,20 +35,19 @@ Options:
   -v         Print version information
   -m PATH    Mount point for the tmpfs file system used to store TPM keyfiles
              Default: /root/keyfs
-  -p PATH    Sealed keyfile path
+  -k PATH    Sealed keyfile path
              Default: /boot/keyfile.enc
-  -x HEX     Index of the TPM NVRAM area holding the key
+  -i HEX     Index of the TPM NVRAM area holding the key
   -s NUMBER  Key size in bytes
              Default: 32
   -t NUMBER  LUKS slot number for the TPM key
              Default: 1
   -r NUMBER  LUKS slot number for temporary reset passphrase
              Default: 2
-  -L NUMBER  PCRs used to seal LUKS keyfile. May be specified more than once
+  -p NUMBER  PCRs used to seal LUKS keyfile. May be specified more than once
              Default: 0-7
   -z         Use TSS well-known secret as owner password for NVRAM index usage
              or SRK password for keyfile sealing
-             (insecure, use for demonstrative purposes only)
 EOF
 }
 
@@ -74,10 +73,10 @@ init_tpm_key() {
 
   echo "Adding new key to slot ${TPM_KEY_SLOT}..."
   echo "${PASSPHRASE}" | cryptsetup luksAddKey ${ROOT_DEVICE} "${KEYFILE}" --key-slot ${TPM_KEY_SLOT}
-  addkey=${?}
+  addkey=$?
 
   seal_key
-  seal=${?}
+  seal=$?
 
   if [ ${addkey} -ne 0 ] || [ ${seal} -ne 0 ]; then
     echo "There was an error initializing the TPM key in slot ${TPM_KEY_SLOT}!" >&2
@@ -94,7 +93,7 @@ add_temp_key() {
 
   if cryptsetup luksAddKey --key-slot ${RESET_KEY_SLOT} --key-file "${KEYFILE}" ${ROOT_DEVICE} < /dev/tty; then
     echo "After booting into the current kernel, run"
-    echo "  luks-tpm $(echo ${ORIGINAL_ARGS} | sed 's/temp$/reset/')"
+    echo "  ${0} $(echo ${ORIGINAL_ARGS} | sed 's/temp$/reset/')"
     echo "to generate a new LUKS key and remove this temporary key"
   else
     echo "A temporary passphrase was not set" >&2
@@ -114,10 +113,10 @@ reset_tpm_key() {
 
   echo "Adding new key to slot ${TPM_KEY_SLOT}..."
   echo "${PASSPHRASE}" | cryptsetup luksAddKey ${ROOT_DEVICE} "${KEYFILE}" --key-slot ${TPM_KEY_SLOT}
-  addkey=${?}
+  addkey=$?
 
   seal_key
-  seal=${?}
+  seal=$?
 
   if [ ${addkey} -eq 0 ] && [ ${seal} -eq 0 ]; then
     echo "Removing temporary passphrase from slot ${RESET_KEY_SLOT}..."
@@ -251,8 +250,8 @@ load_defaults() {
   PCRS="-p 0 -p 1 -p 2 -p 3 -p 4 -p 5 -p 6 -p 7"
   WELL_KNOWN=""
 
-  if [ -r "${CONFFILE:=/etc/default/luks-tpm}" ]; then
-    source "${CONFFILE}"
+  if [ -r "${LUKSTPM_CONFIG:=/etc/default/luks-tpm}" ]; then
+    source "${LUKSTPM_CONFIG}"
   fi
 }
 
@@ -260,7 +259,7 @@ load_defaults() {
 parse_args() {
   ORIGINAL_ARGS="${@}"
 
-  while getopts ":hvm:p:x:s:t:r:L:z" opt; do
+  while getopts ":hvm:k:i:s:t:r:p:z" opt; do
     case ${opt} in
       h)
         version
@@ -276,10 +275,10 @@ parse_args() {
       m)
         TMPFS_MOUNT="${OPTARG}"
         ;;
-      p)
+      k)
         SEALED_KEYFILE="${OPTARG}"
         ;;
-      x)
+      i)
         NVRAM_INDEX="${OPTARG}"
         ;;
       s)
@@ -303,7 +302,7 @@ parse_args() {
         fi
         RESET_KEY_SLOT=${OPTARG}
         ;;
-      L)
+      p)
         if [[ ! ${OPTARG} =~ ^-?[0-9]+$ ]] || [ ${OPTARG} -lt 0 ] || [ ${OPTARG} -gt 23 ]; then
           echo "Invalid PCR: ${OPTARG}" >&2
           exit 1

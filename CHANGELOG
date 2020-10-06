@@ -1,0 +1,8 @@
+luks-tpm 1.0.0
+---------------
+* Update paramters and flow to more closely match the luks-tpm2 tool (zer0def)
+* Add LICENSE, CHANGELOG, etc.
+* Additional minor portability improvements
+* Remove Arch Linux PKGBUILD files
+* Bump major version to 1.0.0
+
